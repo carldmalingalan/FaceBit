@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block leftside%}
+
+
+	
+	
+	
+	<div class="card-body ">
+			<h3 class="card-title">List of image</h3>
+		<div class="table-responsive">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>No.</th>
+						<th>Filename</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for element in images %}		
+						<tr>
+							<td><small>{{forloop.counter}}</small></td>
+							<td><small><a href="javascript:void(0);" class="text-muted" data-toggle="tooltip" data-placement='right' data-html='true' title='<img src="{{element.url}}" class="rounded" height="120" width="120">'>{{element.filename}}</a></small></td>
+						</tr>
+					{% empty %}
+					<tr>
+						<td colspan="2"><em class="text-muted text-center"><small>Nothing to show.</small></em></td>
+					</tr>					
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	
+
+
+{% endblock leftside%}
+{% block content %}
+
+<div class="card-header">
+	<div class="card-title">
+		<h3 class="d-inline">Student Information</h3>
+		<a href="{% url 'dashboard' %}" class="btn d-inline btn-outline-primary float-right">Goto Menu</a>
+	</div>
+		
+
+	</div>
+<div class="card-body">	
+	<div class="form-group">
+		<img src="{{ form.profile_picture.url }}" class="rounded-circle mx-auto d-block" height="150" width="150">
+		<label for="student_number">Student Number</label>
+		<input type="input" id="student_number" class="form-control mb-2" value="{{form.student_number}}" disabled>
+		<label for="student_name">Full Name</label>
+		<input type="input" id="student_name" class="form-control mb-2" value="{{form.full_name}}" disabled>
+		<label for="student_course">Course</label>
+		<input type="input" id="student_course" class="form-control mb-2" value="{{form.student_course.course_name}}" disabled>
+		<label for="date_registered">Date Registed</label>
+		<input type="input" id="date_registered" class="form-control mb-2" value="{{form.date_registered|date:'m/d/Y h:i A'}}" disabled>
+	</div>
+
+</div>
+{% endblock %}
+
+{% block sidebar %}
+
+<!-- <div class="card-header"> -->
+	
+<!-- </div> -->
+<div class="card-body">
+	<div class="card-title">
+		<div class="alert alert-warning"><small>
+		<b>Note</b>: Images that without you in it, will be deleted automatically. <b>Maximum</b> upload is 10, <b>Minimum</b> is 5<br>
+		</small></div>
+	</div>
+		<legend class="border-bottom"><small>Upload Image</small></legend>
+		<small class="text-muted text-error"><em>Min: 5, Max: 10</em></small>
+		<form method="POST" action="{% url 'profile-dataset-save' %}" class="dropzone" id="myDZForm" >{% csrf_token %}
+			<input type="hidden" value="{{form.id}}" name="id">
+		</form>
+		<div class="form-group pt-2 text-center">
+			<button type="button" class="btn btn-block btn-outline-info mx-auto" id="submit">Submit</button>	
+		</div>
+</div>
+{% endblock sidebar %}
+
+
+{% block js %}
+
+<script>
+	Dropzone.autoDiscover = false
+	$(()=>{
+
+		$('#myDZForm').dropzone({
+			maxFilesize: 2.0,
+			maxFile: 4,
+			parallelUploads: 10,
+			uploadMultiple: true,
+			autoProcessQueue: false,
+			acceptedFiles: '.png, .jpg, .jpeg',
+			init: function() {
+				var mythis = this;
+				$('#submit').on('click', () => {
+					if(mythis.getUploadingFiles().length == 0){
+						mythis.processQueue();	
+					}
+				});
+					mythis.on('complete', ()=> {
+					if(this.getQueuedFiles().length == 0 && this.getUploadingFiles().length == 0){
+						setTimeout(()=>{this.removeAllFiles();},1500);
+						
+					}
+				});
+			}
+		});
+	});
+</script>
+
+{% endblock js%}

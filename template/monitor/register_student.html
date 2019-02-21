@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+	<div class="card-body">
+		<legend class="border-bottom mb-2">Student Registration</legend>
+		<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+			{{ form|crispy }}
+			<div class="form-group">
+				<button type="submit" class="btn btn-outline-success">Register</button>
+				<a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+			</div>
+		</form>
+	</div>
+
+{% endblock %}

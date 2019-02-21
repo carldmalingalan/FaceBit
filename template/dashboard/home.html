@@ -1,0 +1,108 @@
+{% extends 'dashboard.html' %}
+
+
+{% block main %}
+							<div class="card">
+							<div class="card-header">
+								<a href="{% url 'monitor-home' %}" class="btn btn-rounded btn-primary float-left">Monitor</a>
+								<button type="button" class="btn btn-rounded btn-brand float-right ml-2" id="initTrain">Train</button>
+								
+								<a href="{%url 'register-student'%}" class="btn btn-rounded btn-success float-right">+ Student</a>
+
+							</div>
+							<div class="card-body">
+								<div class="table-responsive">
+								<table class="table" id="dataTables">
+									<thead>
+										<tr>
+											<th>Id</th>
+											<th>Image</th>
+											<th>Student Number</th>
+											<th>Full Name</th>
+											<th>Training</th>
+											<th>Date Registed</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for data in form %}
+										<tr>
+											<td>{{data.id}}</td>
+											<td> <img src="{{data.profile_picture.url}}" class="rounded" height="50" width="50"></td>
+											<td>{{data.student_number}}</td>
+											<td>{{data.full_name}}</td>
+											<td>
+												{% if data.datasets_set.count < 5 %}
+													<span class="badge-dot badge-danger"></span>
+													Excluded
+												{% else %}
+													<span class="badge-dot badge-success"></span>
+													Included
+												{% endif %}
+											</td>
+											<td>{{data.date_registered|date:"M d, Y"}}</td>
+											<td>
+												<a href="{% url 'register-profile' pk=data.id %}" class="btn btn-xs btn-info mt-2" data-toggle="tooltip" data-placement="top" title="Add image"><span class="fa fa-fw fas fa-plus-circle"></span></a>
+												<a onclick="return confirm('Deleting `{{data.student_number}}` will be permanent')"href="{% url 'delete-student' pk=data.id %}" class="btn btn-xs btn-danger mt-2" data-toggle="tooltip" data-placement="top" title="Delete"><span class="fa fa-fw far fa-trash-alt "></span></a>
+											</td>
+										</tr>
+										{% empty %}
+										<tr>
+											<td colspan="5"><em>Nothing to show.</em></td>
+										</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+								</div>
+							</div>
+						</div>
+{% endblock main %}
+
+
+{% block js %}
+
+
+<script>
+	$(()=>{
+		var dt = $('#dataTables').DataTable()
+		var btn = $('#initTrain')
+
+		function fetch_state(){
+			$.ajax({
+				url: "{% url 'training-state' %}",
+				success: data => {
+					data = JSON.parse(data)
+					if(data.process > 0){
+							btn.addClass('disabled').text('Training...')	
+					}else{
+						
+							btn.removeClass('disabled').text('Train')
+						
+					}
+				}
+			});
+			
+		}
+		var initState = setInterval(()=>{ fetch_state(); }, 5000)
+		$('#initTrain').on('click', () => {
+			$.ajax({
+				url: "{% url 'training' %}",
+				beforeSend: () => { 
+					clearInterval(initState)
+					btn.addClass('disabled').text('Training...')
+				},
+				success: data => {
+					data = JSON.parse(data)
+					if(data.status == 'finish'){
+						btn.removeClass('disabled').text('Train')
+					}else{
+						btn.removeClass('disabled').text('Train')
+						alert("There's nothing to process.(All included student images is done processing)")
+					}
+				}
+			});
+		});
+	})
+</script>
+
+{% endblock js %}

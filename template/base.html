@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	
+	<link rel="stylesheet" href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/fonts/circular-std/style.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/libs/css/style.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/fonts/fontawesome/css/fontawesome-all.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/vector-map/jqvmap.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/jvectormap/jquery-jvectormap-2.0.2.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/charts/chartist-bundle/chartist.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/charts/c3charts/c3.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/charts/morris-bundle/morris.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/daterangepicker/daterangepicker.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/datatables/css/dataTables.bootstrap4.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/datatables/css/buttons.bootstrap4.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/vendor/datatables/css/select.bootstrap4.css' %}">
+
+	<link rel="stylesheet" href="{% static 'assets/vendor/datatables/css/fixedHeader.bootstrap4.css' %}">
+
+	<link rel="stylesheet" href="{% static 'css/jquery-datatables.css' %}">
+	<link rel="stylesheet" href="{% static 'css/dropzone.min.css' %}">
+	<title>Document</title>
+
+</head>
+<body>
+	<main class="container mt-4" role="main">
+		<div class="row">
+			<div class="col-md-3">
+				<div class="card">
+				{% block leftside %}
+				{% endblock leftside %}
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="card">
+				{% if messages %}
+					{% for data in messages %}
+						{% if data.tags == "error" %}
+							<div class="alert alert-danger" id="alert-msg">{{data}}</div>
+						{% else %}
+							<div class="alert alert-{{ data.tags }}" id="alert-msg">{{data}}</div>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+				{% block content %}
+				{% endblock content%}
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card">
+				{% block sidebar %}
+				{% endblock sidebar %}
+				</div>
+			</div>
+		</div>
+	</main>
+	<script src=" {% static 'assets/vendor/jquery/jquery-3.3.1.min.js' %} "></script>
+	<script src=" {% static 'assets/vendor/bootstrap/js/bootstrap.bundle.js' %} "></script>
+	<script src=" {% static 'assets/vendor/slimscroll/jquery.slimscroll.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/chartist-bundle/chartist.min.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/chartist-bundle/Chartistjs.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/chartist-bundle/chartist-plugin-threshold.js' %} "></script>
+	<script src="{% static 'js/dropzone.min.js' %}"></script>
+	
+	<script src=" {% static 'assets/vendor/charts/c3charts/c3.min.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/c3charts/d3-5.4.0.min.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/charts-bundle/Chart.bundle.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/charts-bundle/chartjs.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/sparkline/jquery.sparkline.js' %} "></script>
+	<script src=" {% static 'assets/libs/js/dashboard-finance.js' %} "></script>
+	<script src=" {% static 'assets/libs/js/main-js.js' %} "></script>
+	<script src=" {% static 'assets/vendor/gauge/gauge.min.js' %} "></script>
+
+	<script src=" {% static 'assets/vendor/charts/morris-bundle/raphael.min.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/morris-bundle/morris.js' %} "></script>
+	<script src=" {% static 'assets/vendor/charts/morris-bundle/morrisjs.html' %} "></script>
+	<script src="{% static 'assets/vendor/datatables/js/dataTables.bootstrap4.min.js' %}"></script>
+	<script src="{% static 'assets/vendor/datatables/js/buttons.bootstrap4.min.js' %}"></script>
+	<script src="{% static 'assets/vendor/datatables/js/data-table.js' %}"></script>
+	<script src="{% static 'js/jquery-datatables.js' %}"></script>
+	<script src="{% static 'js/custom/custom.js' %}"></script>
+	{% block js %}
+	{% endblock js %}
+</body>
+</html>
