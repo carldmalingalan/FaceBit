@@ -133,3 +133,8 @@ def identify_face(arr):
 		# 	models.MonitorLog.objects.create(student_info=stud_ins, log_image=file_path)
 		# else:
 		# 	models.MonitorLog.objects.create(log_image=file_path)
+
+
+
+
+

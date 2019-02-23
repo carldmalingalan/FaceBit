@@ -1,16 +1,67 @@
 from django.apps import AppConfig
 from FaceBit import settings
 from PIL import Image
+from . import models
+from datetime import datetime
+
 import json
 import cv2
 import numpy as np
 import face_recognition
 import os
 import pickle
+import uuid
 
 
 class MonitorConfig(AppConfig):
     name = 'monitor'
+
+
+def log_face(roi, faces):
+	master_enc = pickle.loads(open(settings.TRAINING_FILE_DIR, 'rb').read())
+
+	face_encs = face_recognition.face_encodings(roi, faces)
+	names = []
+	for enc in face_encs:
+		matches = face_recognition.compare_faces(master_enc['encodings'], enc)
+		name = "Unknown"
+
+		if True in matches:
+			matchIds = [index for index, value in enumerate(matches) if value]
+			count = {}
+
+			for ind in matches:
+				name = master_enc['student_number'][ind]
+				count[name] = count.get(name, 0) + 1
+
+			name = max(count, key=count.get)
+			names.append(name)
+
+	for ((top, right, bottom, left), name) in zip(faces, names):
+		if name == 'dummy':
+			continue
+		
+		#Fetch the student log information
+		student_id = models.MonitorLog.objects.filter(student_number=name).order_by('-log_time')[:1]
+		# See if QuerySet isn't empty
+		if not len(student_id):
+			uniq_id = uuid.uuid4()
+			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
+			file_picture = cv2.resize(cv2.cvtColor(roi[top:bottom, left:right], cv2.COLOR_RGB2BGR), (150,150), interpolation=cv2.INTER_AREA)
+			cv2.imwrite(file_path, file_picture)		
+			student = models.MonitorLog.objects.create(student_number = name, log_image=file_path)
+			student.save()
+			continue
+
+		# if Student is lo
+		if len(student_id) and (datetime.now().second - student_id[0].log_time.second) > 5:
+		# Uncomment if training is fixed
+			uniq_id = uuid.uuid4()
+			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
+			file_picture = cv2.resize(cv2.cvtColor(roi[top:bottom, left:right], cv2.COLOR_RGB2BGR), (150,150), interpolation=cv2.INTER_AREA)
+			cv2.imwrite(file_path, file_picture)		
+			student = models.MonitorLog.objects.create(student_number = name, log_image=file_path)
+			student.save()
 
 
 #Crop uploaded profile picture

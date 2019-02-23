@@ -31,7 +31,7 @@ def training(request):
 	
 	liststud = DataSets.valid_student(DataSets.objects)
 	data = train_data.delay(liststud)
-	
+
 	return HttpResponse(json.dumps(data.get()))
 	
 
@@ -98,6 +98,8 @@ def monitor_stream(request):
 	detect_something = face_recognition.face_locations(roi_face,model='hog')
 	
 	if len(detect_something):
+		# Uncomment if training is done
+		apps.log_face(roi_face, detect_something)
 		color = (0,255,0)
 
 	#Execute in the background

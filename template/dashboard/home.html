@@ -1,6 +1,5 @@
 {% extends 'dashboard.html' %}
 
-
 {% block main %}
 							<div class="card">
 							<div class="card-header">
@@ -83,16 +82,18 @@
 			});
 			
 		}
-		var initState = setInterval(()=>{ fetch_state(); }, 5000)
+		fetch_state();
+		// var initState = setInterval(()=>{ fetch_state(); }, 5000)
 		$('#initTrain').on('click', () => {
 			$.ajax({
 				url: "{% url 'training' %}",
 				beforeSend: () => { 
-					clearInterval(initState)
+					// clearInterval(initState)
 					btn.addClass('disabled').text('Training...')
 				},
 				success: data => {
 					data = JSON.parse(data)
+					console.log(data)
 					if(data.status == 'finish'){
 						btn.removeClass('disabled').text('Train')
 					}else{

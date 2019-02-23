@@ -124,10 +124,7 @@ class StudentEncoding(models.Model):
 #MonitorLogs starts here
 
 class MonitorLog(models.Model):
-	student_info = models.OneToOneField(Student, null=True, default=None, on_delete=models.CASCADE)
-	log_image	 = models.ImageField() 
-	log_time	 = models.DateTimeField(default=timezone.now)
-
-
-
+	student_number = models.CharField(max_length=11, default='Unknown')
+	log_image	   = models.ImageField() 
+	log_time	   = models.DateTimeField(default=timezone.now)
 #Ends here
