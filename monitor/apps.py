@@ -2,7 +2,8 @@ from django.apps import AppConfig
 from FaceBit import settings
 from PIL import Image
 from . import models
-from datetime import datetime
+from datetime import datetime, timezone
+
 
 import json
 import cv2
@@ -16,6 +17,8 @@ import uuid
 class MonitorConfig(AppConfig):
     name = 'monitor'
 
+    def ready(self):
+    	import monitor.signals
 
 def log_face(roi, faces):
 	master_enc = pickle.loads(open(settings.TRAINING_FILE_DIR, 'rb').read())
@@ -43,6 +46,7 @@ def log_face(roi, faces):
 		
 		#Fetch the student log information
 		student_id = models.MonitorLog.objects.filter(student_number=name).order_by('-log_time')[:1]
+
 		# See if QuerySet isn't empty
 		if not len(student_id):
 			uniq_id = uuid.uuid4()
@@ -52,9 +56,8 @@ def log_face(roi, faces):
 			student = models.MonitorLog.objects.create(student_number = name, log_image=file_path)
 			student.save()
 			continue
-
 		# if Student is lo
-		if len(student_id) and (datetime.now().second - student_id[0].log_time.second) > 5:
+		if len(student_id) and abs(datetime.now().second - student_id[0].log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).second) >= 5:
 		# Uncomment if training is fixed
 			uniq_id = uuid.uuid4()
 			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
@@ -63,6 +66,7 @@ def log_face(roi, faces):
 			student = models.MonitorLog.objects.create(student_number = name, log_image=file_path)
 			student.save()
 
+		
 
 #Crop uploaded profile picture
 def crop_face_thumbnail(path):

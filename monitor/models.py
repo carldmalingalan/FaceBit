@@ -5,7 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django.urls import reverse
 from django.core.validators import RegexValidator
-
+from django.db.models.signals import post_save
 from FaceBit import settings
 from . import apps
 
@@ -124,7 +124,48 @@ class StudentEncoding(models.Model):
 #MonitorLogs starts here
 
 class MonitorLog(models.Model):
-	student_number = models.CharField(max_length=11, default='Unknown')
+	student_number = models.CharField(max_length=11, default='Unknown', unique=False)
 	log_image	   = models.ImageField() 
 	log_time	   = models.DateTimeField(default=timezone.now)
-#Ends here
+
+	def log_info_batch():
+		to_display = []
+		logged = MonitorLog.objects.distinct().order_by('-log_time')[:5]
+		for data in logged:
+			student_inst = Student.objects.get(student_number=data.student_number)
+			clean_data = {
+				'student_number'  : data.student_number,
+				'student_name'	  : student_inst.full_name,
+				'student_img_url' : student_inst.profile_picture.url,
+				'logged_img_url'  : "/"+"/".join(data.log_image.path.split('/')[6:]),
+				'logged_time'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%I:%M:%S %p'),
+				'logged_date'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%B %d, %Y'),
+				}
+			to_display.append(clean_data)
+		return to_display
+
+	def latest_log_info():
+		to_display = []
+		logged = MonitorLog.objects.distinct().order_by('-log_time')[:1]
+		for data in logged:
+			student_inst = Student.objects.get(student_number=data.student_number)
+			clean_data = {
+				'student_number'  : data.student_number,
+				'student_name'	  : student_inst.full_name,
+				'student_img_url' : student_inst.profile_picture.url,
+				'logged_img_url'  : "/"+"/".join(data.log_image.path.split('/')[6:]),
+				'logged_time'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%I:%M:%S %p'),
+				'logged_date'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%B %d, %Y'),
+			}
+			to_display.append(clean_data)
+		return to_display
+
+	def __str__(self):
+		return f"{self.student_number}"
+
+
+# def display_to_front(sender, **kwargs):
+# 	print("Working this shit")
+
+# post_save.connect(display_to_front, sender=MonitorLog)
+# Ends here

@@ -86,49 +86,49 @@ def monitor_stream(request):
 	#Connecting thru IP Camera
 	cap = IPconnect('http://192.168.43.1:8080/shot.jpg')
 	frame = cap.get_frame()
-	
-	ratio = 120
-	color = (0,0,255)
-	
-	rh = int(cap.height / 2)
-	rw = int(cap.width / 2)
-	rgb = frame[:,:,::-1]
-	
-	roi_face = rgb[rh-ratio:rh+ratio, rw-ratio: rw+ratio]
-	detect_something = face_recognition.face_locations(roi_face,model='hog')
-	
-	if len(detect_something):
-		# Uncomment if training is done
-		apps.log_face(roi_face, detect_something)
-		color = (0,255,0)
+	if cap.status:
+		ratio = 120
+		color = (0,0,255)
+		
+		rh = int(cap.height / 2)
+		rw = int(cap.width / 2)
+		rgb = frame[:,:,::-1]
+		
+		roi_face = rgb[rh-ratio:rh+ratio, rw-ratio: rw+ratio]
+		detect_something = face_recognition.face_locations(roi_face,model='hog')
+		
+		if len(detect_something):
+			# Uncomment if training is done
+			apps.log_face(roi_face, detect_something)
+			color = (0,255,0)
 
-	#Execute in the background
-	#Face Recognition
-	# var = json.dumps(frame.tolist())
-	# identify_face.delay(var)
+		#Execute in the background
+		#Face Recognition
+		# var = json.dumps(frame.tolist())
+		# identify_face.delay(var)
 
-	# frame_with_box = apps.detect_faces(frame)
+		# frame_with_box = apps.detect_faces(frame)
 
-	#Left part (Broken Rectangle)
-	cv2.line(frame,(rw-ratio,rh-ratio),(rw-int(ratio / 2),rh-ratio),color,2)
-	cv2.line(frame,(rw-ratio,rh-ratio),(rw-ratio,rh-int(ratio / 2)),color,2)
-	cv2.line(frame,(rw-ratio,rh+ratio),(rw-ratio,rh+int(ratio / 2)),color,2)
-	cv2.line(frame,(rw-ratio,rh+ratio),(rw-int(ratio / 2),rh+ratio),color,2)
+		#Left part (Broken Rectangle)
+		cv2.line(frame,(rw-ratio,rh-ratio),(rw-int(ratio / 2),rh-ratio),color,2)
+		cv2.line(frame,(rw-ratio,rh-ratio),(rw-ratio,rh-int(ratio / 2)),color,2)
+		cv2.line(frame,(rw-ratio,rh+ratio),(rw-ratio,rh+int(ratio / 2)),color,2)
+		cv2.line(frame,(rw-ratio,rh+ratio),(rw-int(ratio / 2),rh+ratio),color,2)
 
-	#Right part (Broken Rectangle)
-	cv2.line(frame,(rw+ratio,rh-ratio),(rw+int(ratio / 2),rh-ratio),color,2)
-	cv2.line(frame,(rw+ratio,rh-ratio),(rw+ratio,rh-int(ratio / 2)),color,2)
-	cv2.line(frame,(rw+ratio,rh+ratio),(rw+ratio,rh+int(ratio / 2)),color,2)
-	cv2.line(frame,(rw+ratio,rh+ratio),(rw+int(ratio / 2),rh+ratio),color,2)
+		#Right part (Broken Rectangle)
+		cv2.line(frame,(rw+ratio,rh-ratio),(rw+int(ratio / 2),rh-ratio),color,2)
+		cv2.line(frame,(rw+ratio,rh-ratio),(rw+ratio,rh-int(ratio / 2)),color,2)
+		cv2.line(frame,(rw+ratio,rh+ratio),(rw+ratio,rh+int(ratio / 2)),color,2)
+		cv2.line(frame,(rw+ratio,rh+ratio),(rw+int(ratio / 2),rh+ratio),color,2)
 
-	#Converting the frame to jpg
-	_, frame_buff = cv2.imencode('.jpg', frame)
-	
-	#Converting jpg to base64
-	frame64 = base64.b64encode(frame_buff).decode('utf-8')
-	
-	#Craeting a dict for json.dumps, 
-	elements = {'main': frame64}
+		#Converting the frame to jpg
+		_, frame_buff = cv2.imencode('.jpg', frame)
+		
+		#Converting jpg to base64
+		frame64 = base64.b64encode(frame_buff).decode('utf-8')
+		
+		#Craeting a dict for json.dumps, 
+		elements = {'main': frame64}
 
-	data = json.dumps(elements)
-	return HttpResponse(data)
+		data = json.dumps(elements)
+		return HttpResponse(data)
