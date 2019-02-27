@@ -49,6 +49,7 @@ def log_face(roi, faces):
 
 		# See if QuerySet isn't empty
 		if not len(student_id):
+			print('Tang ina')
 			uniq_id = uuid.uuid4()
 			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
 			file_picture = cv2.resize(cv2.cvtColor(roi[top:bottom, left:right], cv2.COLOR_RGB2BGR), (150,150), interpolation=cv2.INTER_AREA)
@@ -57,14 +58,16 @@ def log_face(roi, faces):
 			student.save()
 			continue
 		# if Student is lo
-		if len(student_id) and abs(datetime.now().second - student_id[0].log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).second) >= 5:
+		if len(student_id) and abs(datetime.now().second - student_id[0].log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).second) > 5:
 		# Uncomment if training is fixed
+			print('Eto tama')
 			uniq_id = uuid.uuid4()
 			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
 			file_picture = cv2.resize(cv2.cvtColor(roi[top:bottom, left:right], cv2.COLOR_RGB2BGR), (150,150), interpolation=cv2.INTER_AREA)
 			cv2.imwrite(file_path, file_picture)		
 			student = models.MonitorLog.objects.create(student_number = name, log_image=file_path)
 			student.save()
+			continue
 
 		
 

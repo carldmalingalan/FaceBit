@@ -89,17 +89,24 @@
 	<script src="{% static 'assets/vendor/datatables/js/data-table.js' %}"></script>
 	<script src="{% static 'js/jquery-datatables.js' %}"></script>
 	<script src="{% static 'js/custom/custom.js' %}"></script>
+	<script src="{% static 'js/custom/reconnecting-websocket.js' %}"></script>
 	<script>
 		$(()=>{ 
 
 				var protoc = window.location.protocol == "https:" ?  "wss://" : "ws://",
 					endpoint = protoc + window.location.host + window.location.pathname,
-				    socket = new WebSocket(endpoint),
+				    socket = new ReconnectingWebSocket(endpoint),
 				    log_list = $('#logs')
 				socket.onmessage = e => {
 					console.log('Message', e)
 					data = JSON.parse(e.data)
-					$.each(data, (key, value) => {
+					log_data = JSON.parse(data.log_data)
+					// console.log("Main Object", data.log_data)
+					
+					// data = JSON.parse(e.d)
+					// console.log("New data message ==> " + data)
+					
+					$.each(log_data, (key, value) => {
 						log_list.append(
 							`<div class="card">
 								<div class="card-body">
@@ -126,6 +133,7 @@
 				}
 				socket.onopen = e => {
 					console.log('Open', e)
+					
 				}
 				socket.onerror = e => {
 					console.log('Error', e)

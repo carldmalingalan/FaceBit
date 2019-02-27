@@ -6,6 +6,11 @@ from django.utils import timezone
 from django.urls import reverse
 from django.core.validators import RegexValidator
 from django.db.models.signals import post_save
+from django.dispatch import receiver
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+
 from FaceBit import settings
 from . import apps
 
@@ -128,6 +133,14 @@ class MonitorLog(models.Model):
 	log_image	   = models.ImageField() 
 	log_time	   = models.DateTimeField(default=timezone.now)
 
+	def delete(self):
+		try:
+			if os.path.isfile(self.log_image.path):
+				os.remove(self.log_image.path)
+				super(MonitorLog, self).delete()
+		except OSError as E:
+			print(f"[ERROR] => {E}")
+			
 	def log_info_batch():
 		to_display = []
 		logged = MonitorLog.objects.distinct().order_by('-log_time')[:5]
@@ -163,9 +176,20 @@ class MonitorLog(models.Model):
 	def __str__(self):
 		return f"{self.student_number}"
 
+@receiver(post_save, sender=MonitorLog)
+def display_to_front(sender, **kwargs):
+	if kwargs.get('created', False):
+		channel_layer = get_channel_layer()
+		async_to_sync(channel_layer.group_send)(
+			"logStatus", {
+				'type': "logStatus.newEntry",
+				'event': "New Entry",
+				'log_data': json.dumps(MonitorLog.latest_log_info()),
+			}
+			)
+		print('Yeah something just happen!')
 
-# def display_to_front(sender, **kwargs):
-# 	print("Working this shit")
+	# print("Working this shit", timezone.now().strftime("%c"))
 
 # post_save.connect(display_to_front, sender=MonitorLog)
 # Ends here

@@ -13,13 +13,20 @@ class LogConsumer(AsyncConsumer):
 		await self.send({
 			'type': 'websocket.accept',
 			})
+		# data = await self.get_init_five()
+		# await self.send({
+		# 	'type': 'websocket.send',
+		# 	'text': json.dumps(data),
+		# 	})
 
-		
-		data = await self.get_init_five()
+		await self.channel_layer.group_add('logStatus', self.channel_name)
+
+	async def logStatus_newEntry(self, event):
 		await self.send({
 			'type': 'websocket.send',
-			'text': json.dumps(data),
+			'text': json.dumps(event),
 			})
+
 	async def websocket_receive(self, event):
 		print("Receive ", event)
 
