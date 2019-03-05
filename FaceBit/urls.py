@@ -32,6 +32,9 @@ urlpatterns = [
     path('training/', monitor_view.training, name='training'),
     path('training/state/', monitor_view.fetch_state, name='training-state'),
     path('dashboard/', monitor_view.dashboard, name='dashboard'),
+    path('logs/', monitor_view.logs, name='logs'),
+    path('settings/', monitor_view.settings, name='settings'),
+    path('report/', monitor_view.print_report, name='report'),
 ]
 
 

@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+        <title>Title</title>
+        <meta charset="UTF-8">
+        <style>
+        	table {
+        		text-align:center;
+				border-collapse: collapse;
+        	}
+			
+			table, th, td {
+				border: 1px solid black;
+			}
+
+         	th {
+        		background-color: #f4f5f7;
+        		padding: 2px 0 0;
+        	}
+        	
+        	tr {
+        		/*margin-top:10px;*/
+        		padding: 2px 4px 0;
+        	}
+
+        </style>
+    </head>
+    <body>
+ 		<table>
+ 			<thead>
+ 				<tr>
+	 				<th>Student Number</th>
+	 				<th>Fullname</th>
+	 				<th>Date</th>
+	 				<th>Time</th>
+ 				</tr>
+ 			</thead>
+ 			<tbody>
+ 				{% for elem in data %}
+					<tr>
+						<td>{{ elem.student_number }}</td>
+						<td>{{ elem.name }}</td>
+						<td>{{ elem.logged_date}}</td>
+						<td>{{ elem.logged_time}}</td>
+					</tr>
+				{% empty%}
+				<tr>
+					<td colspan="4"><b>No data to show.</b></td>
+				</tr>
+ 				{% endfor %}
+ 			</tbody>
+ 		</table>
+    </body>
+</html>

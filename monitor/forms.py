@@ -1,5 +1,5 @@
 from django import forms
-from .models import Student, DataSets
+from .models import Student, DataSets, InternalConfiguration
 
 class StudentRegisterForm(forms.ModelForm):
 	middle_initial = forms.CharField(required=False)
@@ -15,6 +15,13 @@ class StudentRegisterForm(forms.ModelForm):
 			'profile_picture',
 		]
 
+class Configuration(forms.ModelForm):
+	class Meta:
+		model = InternalConfiguration
+		fields = [
+			'ip_webcam',
+			'identifier_interval',
+		]
 
 
 

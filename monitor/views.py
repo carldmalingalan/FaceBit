@@ -4,18 +4,34 @@ from django.contrib import messages
 
 from datetime import datetime
 from .IPcamera import IPconnect 
-from .forms import StudentRegisterForm
-from .models import Student, DataSets
+from .forms import StudentRegisterForm, Configuration
+from .models import Student, DataSets, MonitorLog, InternalConfiguration, MonitorLog
 from . import apps 
 from .tasks import *
+from threading import *
 
 import json
 import cv2
 import base64
 import face_recognition
 
+conf = InternalConfiguration.objects.first()
+
+ip_add = conf.ip_webcam
+interval = conf.identifier_interval
+
+
 def monitor_home(request):
 	return render(request, 'monitor/home.html')
+
+
+def print_report(request):
+	logs = MonitorLog.print_log_all()
+	context = {'data':logs}
+	pdf = apps.render_to_pdf('dashboard/log_report.html', context)
+	response = HttpResponse(pdf, content_type="application/pdf")
+	response['Content-Disposition'] = f"inline;filename='{datetime.now().strftime('%c')}.pdf'"
+	return response
 
 def fetch_state(request):
 
@@ -30,11 +46,43 @@ def fetch_state(request):
 def training(request):
 	
 	liststud = DataSets.valid_student(DataSets.objects)
-	data = train_data.delay(liststud)
+	dataTrain = Thread(target=apps.train_datasets, args=(liststud,))
 
-	return HttpResponse(json.dumps(data.get()))
+	if not dataTrain.isAlive():
+		dataTrain.start()
+
+	return HttpResponse('Initializing')
+
+def settings(request):
+	form = InternalConfiguration.objects.first()
+	if request.method == "POST":
+		temp_form = Configuration(request.POST)
+		if temp_form.is_valid:
+			form.ip_webcam = request.POST['ip_webcam']
+			form.identifier_interval = request.POST['identifier_interval']
+			form.save()
 	
+	# print(form.identifier_interval)
+	context = {
+		'form': form,
+		'title': {
+			'main' : 'Settings',
+			'text' : 'This is internal configuration of the system',
+		}
+	}
+	return render(request, 'dashboard/settings.html', context)
 
+def logs(request):
+	log_list = MonitorLog.log_all_for_view()
+	context = {
+		'form' : log_list,
+		'title': {
+			'main': 'Student Logged Records',
+			'text': "Here's all the record of all student whose been identified in the monitor."
+		}
+	}
+
+	return render(request, "dashboard/logs.html", context)
 
 def dashboard(request):
 	form = Student.objects.all()
@@ -84,51 +132,44 @@ def delete_student(request, pk):
 
 def monitor_stream(request):
 	#Connecting thru IP Camera
-	cap = IPconnect('http://192.168.43.1:8080/shot.jpg')
-	frame = cap.get_frame()
-	if cap.status:
-		ratio = 120
-		color = (0,0,255)
-		
-		rh = int(cap.height / 2)
-		rw = int(cap.width / 2)
-		rgb = frame[:,:,::-1]
-		
-		roi_face = rgb[rh-ratio:rh+ratio, rw-ratio: rw+ratio]
-		detect_something = face_recognition.face_locations(roi_face,model='hog')
-		
-		if len(detect_something):
-			# Uncomment if training is done
-			apps.log_face(roi_face, detect_something)
-			color = (0,255,0)
+	if len(ip_add) and interval >= 5:
+		cap = IPconnect(ip_add)
+		frame = cap.get_frame()
+		if cap.status:
+			ratio = 120
+			color = (0,0,255)
+			
+			rh = int(cap.height / 2)
+			rw = int(cap.width / 2)
+			rgb = frame[:,:,::-1]
+			
+			roi_face = rgb[rh-ratio:rh+ratio, rw-ratio: rw+ratio]
+			detect_something = face_recognition.face_locations(roi_face,model='hog')
+			
+			if len(detect_something):
+				apps.log_face(roi_face, detect_something, interval)
+				color = (0,255,0)
 
-		#Execute in the background
-		#Face Recognition
-		# var = json.dumps(frame.tolist())
-		# identify_face.delay(var)
+			#Left part (Broken Rectangle)
+			cv2.line(frame,(rw-ratio,rh-ratio),(rw-int(ratio / 2),rh-ratio),color,2)
+			cv2.line(frame,(rw-ratio,rh-ratio),(rw-ratio,rh-int(ratio / 2)),color,2)
+			cv2.line(frame,(rw-ratio,rh+ratio),(rw-ratio,rh+int(ratio / 2)),color,2)
+			cv2.line(frame,(rw-ratio,rh+ratio),(rw-int(ratio / 2),rh+ratio),color,2)
 
-		# frame_with_box = apps.detect_faces(frame)
+			#Right part (Broken Rectangle)
+			cv2.line(frame,(rw+ratio,rh-ratio),(rw+int(ratio / 2),rh-ratio),color,2)
+			cv2.line(frame,(rw+ratio,rh-ratio),(rw+ratio,rh-int(ratio / 2)),color,2)
+			cv2.line(frame,(rw+ratio,rh+ratio),(rw+ratio,rh+int(ratio / 2)),color,2)
+			cv2.line(frame,(rw+ratio,rh+ratio),(rw+int(ratio / 2),rh+ratio),color,2)
 
-		#Left part (Broken Rectangle)
-		cv2.line(frame,(rw-ratio,rh-ratio),(rw-int(ratio / 2),rh-ratio),color,2)
-		cv2.line(frame,(rw-ratio,rh-ratio),(rw-ratio,rh-int(ratio / 2)),color,2)
-		cv2.line(frame,(rw-ratio,rh+ratio),(rw-ratio,rh+int(ratio / 2)),color,2)
-		cv2.line(frame,(rw-ratio,rh+ratio),(rw-int(ratio / 2),rh+ratio),color,2)
+			#Converting the frame to jpg
+			_, frame_buff = cv2.imencode('.jpg', frame)
+			
+			#Converting jpg to base64
+			frame64 = base64.b64encode(frame_buff).decode('utf-8')
+			
+			#Craeting a dict for json.dumps, 
+			elements = {'main': frame64}
 
-		#Right part (Broken Rectangle)
-		cv2.line(frame,(rw+ratio,rh-ratio),(rw+int(ratio / 2),rh-ratio),color,2)
-		cv2.line(frame,(rw+ratio,rh-ratio),(rw+ratio,rh-int(ratio / 2)),color,2)
-		cv2.line(frame,(rw+ratio,rh+ratio),(rw+ratio,rh+int(ratio / 2)),color,2)
-		cv2.line(frame,(rw+ratio,rh+ratio),(rw+int(ratio / 2),rh+ratio),color,2)
-
-		#Converting the frame to jpg
-		_, frame_buff = cv2.imencode('.jpg', frame)
-		
-		#Converting jpg to base64
-		frame64 = base64.b64encode(frame_buff).decode('utf-8')
-		
-		#Craeting a dict for json.dumps, 
-		elements = {'main': frame64}
-
-		data = json.dumps(elements)
-		return HttpResponse(data)
+			data = json.dumps(elements)
+			return HttpResponse(data)

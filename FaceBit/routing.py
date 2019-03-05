@@ -4,14 +4,15 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator, OriginValidator
 
-from monitor.consumer import LogConsumer
+from monitor.consumer import LogConsumer,TrainData
 
 application = ProtocolTypeRouter({
     'websocket': AllowedHostsOriginValidator(
     	AuthMiddlewareStack(
     		URLRouter(
     				[
-    					url("", LogConsumer),
+    					url(r"^dashboard/", TrainData),
+    					url(r"^", LogConsumer),
     				]
     			)
     		)

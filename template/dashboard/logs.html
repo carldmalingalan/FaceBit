@@ -1,0 +1,43 @@
+{% extends 'dashboard.html' %}
+
+{% block main %}
+	<div class="card">
+		<div class="card-body">
+			<div class="card-title">
+				<a href="{% url 'report' %}" class="float-left btn btn-rounded btn-secondary" target="_blank">Print</a>	
+			</div>
+			<div class="table-responsive pt-2">
+				<table class="table table-striped text-center" id="logsTable">
+					<thead>
+						<tr>
+							<th>Image</th>
+							<th>Student #</th>
+							<th>Name</th>
+							<th>Date/Time</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for data in form %}
+							<tr>
+								<td> <img src="{{data.image}}" class="rounded mx-auto d-flex" height="50" width="50" /> </td>
+								<td>{{data.student_number}}</td>
+								<td>{{data.name}}</td>
+								<td>{{data.logged_datetime}}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+{% endblock main %}
+
+{% block js %}
+<script>
+	$(()=>{
+		$('#sideLogs').addClass('active')
+		var dt = $('#logsTable').DataTable()
+	})
+
+</script>
+{% endblock js %}

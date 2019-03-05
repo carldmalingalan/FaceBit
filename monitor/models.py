@@ -28,6 +28,24 @@ class Course(models.Model):
 		return f"{self.course_name}"
 #Ends here
 
+#Start of InternalConfiguration
+
+class InternalConfiguration(models.Model):
+	TIME = (
+		(5, '5 Seconds'),
+		(10, '10 Seconds'),
+		(15,'15 Seconds'),
+		(30, '30 Seconds'),
+		(60, '1 Minute'),
+		)
+	ip_webcam = models.CharField(max_length=255)
+	identifier_interval = models.IntegerField(choices=TIME, default='5 Seconds')
+
+	# def __str__(self):
+	# 	return f"{self.ip_webcam} => {self.indentifier_interval} secs"
+
+#Ends here
+
 #Student starts here
 def user_directory_path(instance, filename):
 	split = filename.split('.')
@@ -143,14 +161,14 @@ class MonitorLog(models.Model):
 			
 	def log_info_batch():
 		to_display = []
-		logged = MonitorLog.objects.distinct().order_by('-log_time')[:5]
+		logged = MonitorLog.objects.distinct().order_by('-log_time')
 		for data in logged:
 			student_inst = Student.objects.get(student_number=data.student_number)
 			clean_data = {
 				'student_number'  : data.student_number,
 				'student_name'	  : student_inst.full_name,
 				'student_img_url' : student_inst.profile_picture.url,
-				'logged_img_url'  : "/"+"/".join(data.log_image.path.split('/')[6:]),
+				'logged_img_url'  : "/"+"/".join(data.log_image.path.split('/')[-3:]),
 				'logged_time'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%I:%M:%S %p'),
 				'logged_date'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%B %d, %Y'),
 				}
@@ -166,11 +184,65 @@ class MonitorLog(models.Model):
 				'student_number'  : data.student_number,
 				'student_name'	  : student_inst.full_name,
 				'student_img_url' : student_inst.profile_picture.url,
-				'logged_img_url'  : "/"+"/".join(data.log_image.path.split('/')[6:]),
+				'logged_img_url'  : "/"+"/".join(data.log_image.path.split('/')[-3:]),
 				'logged_time'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%I:%M:%S %p'),
 				'logged_date'	  : data.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%B %d, %Y'),
 			}
 			to_display.append(clean_data)
+		return to_display
+
+	def log_all_for_view():
+		to_display = []
+		temp_data = {}
+		data = MonitorLog.objects.all().order_by('-log_time')
+		#Iterate thru all the data in the MonitorLog table
+		'''
+			See if the student name is present in the temporary data
+			I use this temp_data so that for every iteration if the 
+			the student number has been processed in the previous iteration
+			then it woundn't fetch the data from the datebase so that it execution time
+		'''
+		for element in data:
+			student_name = temp_data.get(element.student_number, False)
+			if not student_name:
+				student_name = Student.objects.get(student_number=element.student_number).full_name
+				temp_data[element.student_number] = student_name
+
+			ret_data = {
+				'image': "/"+"/".join(element.log_image.path.split('/')[-3:]),
+				'student_number': element.student_number,
+				'name' : student_name,
+				'logged_datetime' : element.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%B %d, %Y/%I:%M:%S %p'),
+			}
+			to_display.append(ret_data)
+
+		return to_display
+
+	def print_log_all():
+		to_display = []
+		temp_data = {}
+		data = MonitorLog.objects.all().order_by('-log_time')
+		#Iterate thru all the data in the MonitorLog table
+		'''
+			See if the student name is present in the temporary data
+			I use this temp_data so that for every iteration if the 
+			the student number has been processed in the previous iteration
+			then it woundn't fetch the data from the datebase so that it execution time
+		'''
+		for element in data:
+			student_name = temp_data.get(element.student_number, False)
+			if not student_name:
+				student_name = Student.objects.get(student_number=element.student_number).full_name
+				temp_data[element.student_number] = student_name
+
+			ret_data = {
+				'student_number': element.student_number,
+				'name' : student_name,
+				'logged_date' : element.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%B %d, %Y'),
+				'logged_time' : element.log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime("%I:%M:%S %p"),
+			}
+			to_display.append(ret_data)
+
 		return to_display
 
 	def __str__(self):
@@ -187,9 +259,5 @@ def display_to_front(sender, **kwargs):
 				'log_data': json.dumps(MonitorLog.latest_log_info()),
 			}
 			)
-		print('Yeah something just happen!')
-
-	# print("Working this shit", timezone.now().strftime("%c"))
-
-# post_save.connect(display_to_front, sender=MonitorLog)
+	
 # Ends here

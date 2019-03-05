@@ -3,7 +3,13 @@ from FaceBit import settings
 from PIL import Image
 from . import models
 from datetime import datetime, timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from io import BytesIO
+from django.http import HttpResponse
+from django.template.loader import get_template
 
+from xhtml2pdf import pisa
 
 import json
 import cv2
@@ -20,7 +26,56 @@ class MonitorConfig(AppConfig):
     def ready(self):
     	import monitor.signals
 
-def log_face(roi, faces):
+def render_to_pdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html  = template.render(context_dict)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+    if not pdf.err:
+        return HttpResponse(result.getvalue(), content_type='application/pdf')
+    return None
+
+def train_datasets(stud_list):
+	file_list = {}
+	result = {'status':None}
+	if len(stud_list):
+		file = pickle.loads(open(settings.TRAINING_FILE_DIR, 'rb').read())
+		for data in stud_list:
+			if data not in file['student_number']:
+				file_list[data] = [os.path.join(os.path.join(settings.DATASETS_DIR, data),path) for path in os.listdir(os.path.join(settings.DATASETS_DIR, data))]
+
+		if len(file_list):
+			for stud_num in file_list:
+				for path in file_list[stud_num]:
+					img = cv2.imread(path)
+					rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+					boxes = face_recognition.face_locations(rgb, model="hog")
+					encs = face_recognition.face_encodings(rgb, boxes, num_jitters=5)
+					for enc in encs:
+						file['encodings'].append(enc)
+						file['student_number'].append(stud_num)
+
+				file_data = open(settings.TRAINING_FILE_DIR, 'wb')
+				file_data.write(pickle.dumps(file))
+				file_data.close()
+
+			result['status'] = 'Finished training!'
+
+		else:
+			result['status'] = 'Nothing to train.'
+
+		channel_layer = get_channel_layer()
+		async_to_sync(channel_layer.group_send)("training",{
+				'type':'training.status',
+				'event': 'Status Report',
+				'log_data': json.dumps(result)
+			})
+		
+
+
+
+def log_face(roi, faces, interval):
 	master_enc = pickle.loads(open(settings.TRAINING_FILE_DIR, 'rb').read())
 
 	face_encs = face_recognition.face_encodings(roi, faces)
@@ -45,11 +100,10 @@ def log_face(roi, faces):
 			continue
 		
 		#Fetch the student log information
-		student_id = models.MonitorLog.objects.filter(student_number=name).order_by('-log_time')[:1]
+		student_id = models.MonitorLog.objects.filter(student_number=name).order_by('-log_time')
 
 		# See if QuerySet isn't empty
 		if not len(student_id):
-			print('Tang ina')
 			uniq_id = uuid.uuid4()
 			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
 			file_picture = cv2.resize(cv2.cvtColor(roi[top:bottom, left:right], cv2.COLOR_RGB2BGR), (150,150), interpolation=cv2.INTER_AREA)
@@ -58,9 +112,11 @@ def log_face(roi, faces):
 			student.save()
 			continue
 		# if Student is lo
-		if len(student_id) and abs(datetime.now().second - student_id[0].log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).second) > 5:
+		total_diff = (datetime.now() - student_id[0].log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).replace(tzinfo=None))
+		print(total_diff)
+		# print(f"Student Latest Entry => {student_id[0].log_time.replace(tzinfo=timezone.utc).astimezone(tz=None).replace(tzinfo=None).strftime('%c')}, Current Time => {datetime.now().strftime('%c')}, Total Difference => {total_diff}")
+		if len(student_id) and int(abs(total_diff.total_seconds())) > interval:	
 		# Uncomment if training is fixed
-			print('Eto tama')
 			uniq_id = uuid.uuid4()
 			file_path = os.path.join(settings.LOGS_ROOT, f"{uniq_id}.jpg")
 			file_picture = cv2.resize(cv2.cvtColor(roi[top:bottom, left:right], cv2.COLOR_RGB2BGR), (150,150), interpolation=cv2.INTER_AREA)

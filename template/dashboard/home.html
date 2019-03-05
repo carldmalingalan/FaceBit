@@ -63,46 +63,83 @@
 
 <script>
 	$(()=>{
+		$('#sideStudent').addClass('active')
 		var dt = $('#dataTables').DataTable()
-		var btn = $('#initTrain')
+		var protoc = window.location.protocol == "https:" ?  "wss://" : "ws://",
+			endpoint = protoc + window.location.host + window.location.pathname,
+		    socket = new ReconnectingWebSocket(endpoint),
+		    train = $('#initTrain')
 
-		function fetch_state(){
-			$.ajax({
-				url: "{% url 'training-state' %}",
-				success: data => {
-					data = JSON.parse(data)
-					if(data.process > 0){
-							btn.addClass('disabled').text('Training...')	
-					}else{
-						
-							btn.removeClass('disabled').text('Train')
-						
-					}
+			train.on('click', () => {
+				train.attr('disabled',true)
+				startTraining()
+			})
+			socket.onmessage = event => {
+				var data = convertable(event.data) ? JSON.parse(JSON.parse(event.data)) : false;
+				
+				if (data){
+					train.attr('disabled',false)
+					alert(data['status'])	
 				}
-			});
-			
+				
+			}
+
+		function convertable(string){
+			try{
+				JSON.parse(string)
+			}catch(e){
+				return false
+			}
+
+			return true
 		}
-		fetch_state();
-		// var initState = setInterval(()=>{ fetch_state(); }, 5000)
-		$('#initTrain').on('click', () => {
+
+		function startTraining(){
 			$.ajax({
-				url: "{% url 'training' %}",
-				beforeSend: () => { 
-					// clearInterval(initState)
-					btn.addClass('disabled').text('Training...')
-				},
-				success: data => {
-					data = JSON.parse(data)
-					console.log(data)
-					if(data.status == 'finish'){
-						btn.removeClass('disabled').text('Train')
-					}else{
-						btn.removeClass('disabled').text('Train')
-						alert("There's nothing to process.(All included student images is done processing)")
-					}
-				}
-			});
-		});
+				url: "{% url 'training' %}"
+			})
+		}
+
+
+		// var btn = $('#initTrain')
+
+		// function fetch_state(){
+		// 	$.ajax({
+		// 		url: "{% url 'training-state' %}",
+		// 		success: data => {
+		// 			data = JSON.parse(data)
+		// 			if(data.process > 0){
+		// 					btn.addClass('disabled').text('Training...')	
+		// 			}else{
+						
+		// 					btn.removeClass('disabled').text('Train')
+						
+		// 			}
+		// 		}
+		// 	});
+			
+		// }
+		// fetch_state();
+		// // var initState = setInterval(()=>{ fetch_state(); }, 5000)
+		// $('#initTrain').on('click', () => {
+		// 	$.ajax({
+		// 		url: "{% url 'training' %}",
+		// 		beforeSend: () => { 
+		// 			// clearInterval(initState)
+		// 			btn.addClass('disabled').text('Training...')
+		// 		},
+		// 		success: data => {
+		// 			data = JSON.parse(data)
+		// 			console.log(data)
+		// 			if(data.status == 'finish'){
+		// 				btn.removeClass('disabled').text('Train')
+		// 			}else{
+		// 				btn.removeClass('disabled').text('Train')
+		// 				alert("There's nothing to process.(All included student images is done processing)")
+		// 			}
+		// 		}
+		// 	});
+		// });
 	})
 </script>
 

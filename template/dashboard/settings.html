@@ -1,0 +1,41 @@
+{% extends 'dashboard.html' %}
+{% load crispy_forms_tags %}
+{% block main %}
+
+<div class="card">
+	<input type="hidden" id="interval" value="{{form.identifier_interval}}">
+	<div class="card-body">
+		<form method="POST">
+			{% csrf_token %}
+			<div class="form-group">
+					<input type="text" class="form-control" name="ip_webcam" id="ip_webcam" value="{{form.ip_webcam}}"/>
+			</div>
+			<div class="form-group">
+
+					<label for="interval">Identifier Interval</label>
+					<select class="form-control"name="identifier_interval" id="identifier_interval">
+						<option value="5">5 Seconds</option>
+						<option value="10">10 Seconds</option>
+						<option value="15">15 Seconds</option>
+						<option value="30">30 Seconds</option>
+						<option value="60">1 Minute</option>
+					</select>
+			</div>
+		<button class="btn btn-outline-success" type="submit">Change</button>
+		</form>
+	</div>
+</div>
+
+{% endblock main %}
+
+{% block js %}
+
+<script>
+	$(()=>{
+		$('#sideSettings').addClass('active')
+		var inter = $('#interval').val()
+		$('#identifier_interval').find(`option[value="${inter}"]`).attr('selected', true)
+	})
+</script>
+
+{% endblock js %}
