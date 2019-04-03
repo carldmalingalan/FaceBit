@@ -1,7 +1,8 @@
+from django.forms import ModelForm
 from django import forms
 from .models import Student, DataSets, InternalConfiguration
 
-class StudentRegisterForm(forms.ModelForm):
+class StudentRegisterForm(ModelForm):
 	middle_initial = forms.CharField(required=False)
 
 	class Meta:
@@ -15,7 +16,7 @@ class StudentRegisterForm(forms.ModelForm):
 			'profile_picture',
 		]
 
-class Configuration(forms.ModelForm):
+class Configuration(ModelForm):
 	class Meta:
 		model = InternalConfiguration
 		fields = [

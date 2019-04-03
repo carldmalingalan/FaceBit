@@ -98,8 +98,9 @@ def dashboard(request):
 def profile_dataset_save(request):
 	student = Student.objects.get(id=request.POST['id'])
 	for data in request.FILES:
-		
+		print(f'{request}')
 		if apps.list_image_count(student.student_number) >= 10: 
+			print("Hala")
 			break
 
 		create = DataSets.objects.create(student_info = student, dataset_image = request.FILES[data])		
@@ -132,7 +133,7 @@ def delete_student(request, pk):
 
 def monitor_stream(request):
 	#Connecting thru IP Camera
-	if len(ip_add) and interval >= 5:
+	if len(ip_add):
 		cap = IPconnect(ip_add)
 		frame = cap.get_frame()
 		if cap.status:
@@ -147,7 +148,7 @@ def monitor_stream(request):
 			detect_something = face_recognition.face_locations(roi_face,model='hog')
 			
 			if len(detect_something):
-				apps.log_face(roi_face, detect_something, interval)
+				apps.log_face(roi_face, detect_something, 5)
 				color = (0,255,0)
 
 			#Left part (Broken Rectangle)

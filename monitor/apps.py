@@ -40,9 +40,12 @@ def train_datasets(stud_list):
 	result = {'status':None}
 	if len(stud_list):
 		file = pickle.loads(open(settings.TRAINING_FILE_DIR, 'rb').read())
+		
 		for data in stud_list:
-			if data not in file['student_number']:
-				file_list[data] = [os.path.join(os.path.join(settings.DATASETS_DIR, data),path) for path in os.listdir(os.path.join(settings.DATASETS_DIR, data))]
+			if not data in file['student_number']:
+				is_valid = os.listdir(os.path.join(settings.DATASETS_DIR, data))
+				if len(is_valid) >= 5:
+					file_list[data] = [os.path.join(os.path.join(settings.DATASETS_DIR, data),path) for path in os.listdir(os.path.join(settings.DATASETS_DIR, data))]
 
 		if len(file_list):
 			for stud_num in file_list:
@@ -94,11 +97,11 @@ def log_face(roi, faces, interval):
 
 			name = max(count, key=count.get)
 			names.append(name)
-
+	print(names)
 	for ((top, right, bottom, left), name) in zip(faces, names):
 		if name == 'dummy':
 			continue
-		
+		print(name)
 		#Fetch the student log information
 		student_id = models.MonitorLog.objects.filter(student_number=name).order_by('-log_time')
 

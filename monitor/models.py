@@ -9,7 +9,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
+from PIL import Image, ExifTags
 
 from FaceBit import settings
 from . import apps
@@ -109,7 +109,7 @@ class DataSets(models.Model):
 
 	def valid_student(self):
 		valid = self.values('student_info').annotate(entries=models.Count('student_info')).filter(entries__gte=5)
-		student = [Student.objects.get(id=stud_num['student_info']).student_number for stud_num in valid]		
+		student = [Student.objects.get(id=stud_num['student_info']).student_number for stud_num in valid]
 		return student
 
 	def save(self, *args, **kwargs):
@@ -118,6 +118,27 @@ class DataSets(models.Model):
 		#Fetching the student profile picture encodings
 		enc = StudentEncoding.objects.get(student_info=self.student_info).student_encoding
 		
+		#Checking if image is rotated
+		try:
+		    image=Image.open(self.dataset_image.path)
+		    for orientation in ExifTags.TAGS.keys():
+		        if ExifTags.TAGS[orientation]=='Orientation':
+		            break
+		    exif=dict(image._getexif().items())
+
+		    if exif[orientation] == 3:
+		        image=image.rotate(180, expand=True)
+		    elif exif[orientation] == 6:
+		        image=image.rotate(270, expand=True)
+		    elif exif[orientation] == 8:
+		        image=image.rotate(90, expand=True)
+		    image.save(self.dataset_image.path)
+		    image.close()
+
+		except (AttributeError, KeyError, IndexError):
+		    # cases: image don't have getexif
+		    pass
+
 		#Testing if the picture is a valid image
 		if apps.quick_compare(enc, self.dataset_image.path) is False:
 			self.delete()

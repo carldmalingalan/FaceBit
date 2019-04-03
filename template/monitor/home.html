@@ -54,6 +54,7 @@
 						<hr>
 					</div>
 					<div class="card-body card-scroll main" id="logs">
+						<div></div>
 						<!-- <div class="card bg-white">
 							<div class="card-body">
 								<div class="card-title">Carl Dennis Alingalan</div>
@@ -96,9 +97,8 @@
 				var protoc = window.location.protocol == "https:" ?  "wss://" : "ws://",
 					endpoint = protoc + window.location.host + window.location.pathname,
 				    socket = new ReconnectingWebSocket(endpoint),
-				    log_list = $('#logs')
+				    log_list = $('#logs > div').first()
 				socket.onmessage = e => {
-					console.log('Message', e)
 					data = JSON.parse(e.data)
 					log_data = JSON.parse(data.log_data)
 					// console.log("Main Object", data.log_data)
@@ -107,7 +107,7 @@
 					// console.log("New data message ==> " + data)
 					
 					$.each(log_data, (key, value) => {
-						log_list.append(
+						log_list.prepend(
 							`<div class="card">
 								<div class="card-body">
 									<div class="row pb-2">
@@ -131,16 +131,6 @@
 							)
 					})
 				}
-				socket.onopen = e => {
-					console.log('Open', e)
-					
-				}
-				socket.onerror = e => {
-					console.log('Error', e)
-				}
-				socket.onclose = e => {
-					console.log('Close', e)
-				}	
 
 				var currTime      = $('#currentTime'),
 		monitorStream = $('#monitorStream'),
